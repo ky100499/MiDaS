@@ -173,6 +173,7 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
             video = VideoStream(0).start()
             time_start = time.time()
             frame_index = 0
+
             while True:
                 frame = video.read()
                 if frame is not None:
@@ -184,7 +185,20 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
 
                     original_image_bgr = np.flip(original_image_rgb, 2) if side else None
                     content = create_side_by_side(original_image_bgr, prediction, grayscale)
-                    cv2.imshow('MiDaS Depth Estimation - Press Escape to close window ', content/255)
+
+                    content = cv2.cvtColor(content, cv2.COLOR_BGR2GRAY)
+
+                    # 특정 색상값 위로 모두 거르기
+                    # color_limit = 168
+                    # content = cv2.inRange(content, color_limit, 255)
+
+                    # 경계선 검출 (Sobel Filter)
+                    color_limit = 30
+                    content = content.astype(np.int16)
+                    content = np.abs(cv2.Sobel(content, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(content, -1, 0, 1, ksize=3))
+                    content = cv2.inRange(content, color_limit, 255)
+
+                    cv2.imshow('Result', content/255)
 
                     if output_path is not None:
                         filename = os.path.join(output_path, 'Camera' + '-' + model_type + '_' + str(frame_index))
@@ -225,7 +239,7 @@ if __name__ == "__main__":
                         )
 
     parser.add_argument('-t', '--model_type',
-                        default='dpt_beit_large_512',
+                        default='dpt_swin2_large_384',
                         help='Model type: '
                              'dpt_beit_large_512, dpt_beit_large_384, dpt_beit_base_384, dpt_swin2_large_384, '
                              'dpt_swin2_base_384, dpt_swin2_tiny_256, dpt_swin_large_384, dpt_next_vit_large_384, '
