@@ -120,7 +120,12 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
     print("Initialize")
 
     # select device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print("Device: %s" % device)
 
     model, transform, net_w, net_h = load_model(device, model_path, model_type, optimize, height, square)
@@ -193,10 +198,10 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
                     # content = cv2.inRange(content, color_limit, 255)
 
                     # 경계선 검출 (Sobel Filter)
-                    color_limit = 30
-                    content = content.astype(np.int16)
-                    content = np.abs(cv2.Sobel(content, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(content, -1, 0, 1, ksize=3))
-                    content = cv2.inRange(content, color_limit, 255)
+                    # color_limit = 30
+                    # content = content.astype(np.int16)
+                    # content = np.abs(cv2.Sobel(content, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(content, -1, 0, 1, ksize=3))
+                    # content = cv2.inRange(content, color_limit, 255)
 
                     cv2.imshow('Result', content/255)
 
