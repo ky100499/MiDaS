@@ -199,11 +199,37 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
 
                     # 경계선 검출 (Sobel Filter)
                     # color_limit = 30
-                    # content = content.astype(np.int16)
-                    # content = np.abs(cv2.Sobel(content, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(content, -1, 0, 1, ksize=3))
-                    # content = cv2.inRange(content, color_limit, 255)
+                    # blurred = cv2.GaussianBlur(content, (5, 5), 0)
+                    # thresh = blurred.astype(np.int16)
+                    # thresh = np.abs(cv2.Sobel(thresh, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(thresh, -1, 0, 1, ksize=3))
+                    # thresh = cv2.inRange(thresh, color_limit, 255)
 
-                    cv2.imshow('Result', content/255)
+                    # 경계선 검출 (Scharr Filter)
+                    # color_limit = 30
+                    # thresh = content.astype(np.int16)
+                    # thresh = np.abs(cv2.Scharr(thresh, -1, 1, 0)) + np.abs(cv2.Scharr(thresh, -1, 0, 1))
+                    # thresh = cv2.inRange(thresh, color_limit, 255)
+
+                    # 경계선 검출 (Threshold)
+                    color_limit = 84
+                    blurred = cv2.GaussianBlur(content, (9, 9), 0)
+                    ret, thresh = cv2.threshold(blurred, color_limit, 255, cv2.THRESH_BINARY)
+
+                    # cv2.imshow("Thresh", thresh)
+
+                    # 모든 컨투어를 트리 계층 으로 수집
+                    contour2, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+                    # print(len(contour2), hierarchy)
+
+                    # 모든 컨투어 그리기
+                    for idx, cont in enumerate(contour2):
+                        # 랜덤한 컬러 추출
+                        color = [int(i) for i in np.random.randint(0,255, 3)]
+                        # 컨투어 인덱스 마다 랜덤한 색상으로 그리기
+                        cv2.drawContours(frame, contour2, idx, color, 3)
+
+                    cv2.imshow('Result', frame/255)
 
                     if output_path is not None:
                         filename = os.path.join(output_path, 'Camera' + '-' + model_type + '_' + str(frame_index))
