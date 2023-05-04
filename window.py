@@ -11,9 +11,6 @@ class Window(QtWidgets.QMainWindow):
 
         self.setWindowTitle("Depth Estimation")
 
-        # self.__running = False
-        self.cap = cv2.VideoCapture(0)
-
         self.show()
 
         self.__running = True
@@ -36,6 +33,7 @@ class Window(QtWidgets.QMainWindow):
                 btn = QtWidgets.QRadioButton("Camera #%d" % camIndex)
                 btn.clicked.connect(self.selectCam(camIndex))
                 if camIndex == 0:
+                    self.cap = cam
                     btn.setChecked(True)
                 radioBox.addWidget(btn)
                 camIndex += 1
@@ -74,7 +72,9 @@ class Window(QtWidgets.QMainWindow):
 
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = cv2.resize(frame, (1280, 720), interpolation=cv2.INTER_LINEAR)
                 h, w, c = frame.shape
+                # print(w, h)
                 qImg = QtGui.QImage(frame.data, w, h, w*c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
@@ -85,7 +85,6 @@ class Window(QtWidgets.QMainWindow):
         self.cap.release()
 
     def stop(self):
-        self.__running = False
         print("stopped..")
 
     def start(self):
