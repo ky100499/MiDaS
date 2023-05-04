@@ -85,6 +85,7 @@ class Window(QtWidgets.QMainWindow):
         self.cap.release()
 
     def stop(self):
+        self.__running = False
         print("stopped..")
 
     def start(self):
