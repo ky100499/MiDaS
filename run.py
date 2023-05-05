@@ -191,31 +191,36 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
                     original_image_bgr = np.flip(original_image_rgb, 2) if side else None
                     content = create_side_by_side(original_image_bgr, prediction, grayscale)
 
-                    content = cv2.cvtColor(content, cv2.COLOR_BGR2GRAY)
+                    # Grayscale
+                    grayscaled = cv2.cvtColor(content, cv2.COLOR_BGR2GRAY)
 
                     # 특정 색상값 위로 모두 거르기
                     # color_limit = 168
-                    # content = cv2.inRange(content, color_limit, 255)
+                    # grayscaled = cv2.inRange(grayscaled, color_limit, 255)
 
                     # 경계선 검출 (Sobel Filter)
                     # color_limit = 30
-                    # blurred = cv2.GaussianBlur(content, (5, 5), 0)
+                    # blurred = cv2.GaussianBlur(grayscaled, (5, 5), 0)
                     # thresh = blurred.astype(np.int16)
                     # thresh = np.abs(cv2.Sobel(thresh, -1, 1, 0, ksize=3)) + np.abs(cv2.Sobel(thresh, -1, 0, 1, ksize=3))
                     # thresh = cv2.inRange(thresh, color_limit, 255)
 
                     # 경계선 검출 (Scharr Filter)
                     # color_limit = 30
-                    # thresh = content.astype(np.int16)
+                    # thresh = grayscaled.astype(np.int16)
                     # thresh = np.abs(cv2.Scharr(thresh, -1, 1, 0)) + np.abs(cv2.Scharr(thresh, -1, 0, 1))
                     # thresh = cv2.inRange(thresh, color_limit, 255)
 
                     # 경계선 검출 (Threshold)
-                    color_limit = 84
-                    blurred = cv2.GaussianBlur(content, (9, 9), 0)
-                    ret, thresh = cv2.threshold(blurred, color_limit, 255, cv2.THRESH_BINARY)
+                    # color_limit = 144
+                    # blurred = cv2.GaussianBlur(grayscaled, (9, 9), 0)
+                    # ret, thresh = cv2.threshold(blurred, color_limit, 255, cv2.THRESH_BINARY)
 
                     # cv2.imshow("Thresh", thresh)
+
+                    # Canny Edge Detection
+                    blurred = cv2.GaussianBlur(content, (7, 7), 0)
+                    thresh = cv2.Canny(blurred, 20, 150)
 
                     # 모든 컨투어를 트리 계층 으로 수집
                     contour2, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -226,8 +231,36 @@ def run(input_path, output_path, model_path, model_type="dpt_beit_large_512", op
                     for idx, cont in enumerate(contour2):
                         # 랜덤한 컬러 추출
                         color = [int(i) for i in np.random.randint(0,255, 3)]
+
+                        # Approx
+                        # epslion = 0.05 * cv2.arcLength(cont, True)
+                        # approx = cv2.approxPolyDP(cont, epslion, True)
+
+                        # minAreaRect
+                        # rect = cv2.minAreaRect(cont)
+                        # approx = np.int0(cv2.boxPoints(rect))
+
+                        # convexHull
+                        approx = cv2.convexHull(cont)
+
                         # 컨투어 인덱스 마다 랜덤한 색상으로 그리기
-                        cv2.drawContours(frame, contour2, idx, color, 3)
+                        mask = np.zeros(frame.shape[:2], dtype="uint8")
+
+                        cv2.drawContours(mask, [approx], 0, 255, cv2.FILLED)
+                        cv2.drawContours(frame, [approx], 0, color, 3)
+
+                        mask_inv = cv2.bitwise_not(mask)
+
+                        average = np.array(cv2.mean(content, mask=mask)[:3], dtype=np.uint8)
+                        # average = np.flip(average, 0)
+                        print(average)
+
+                        c = np.tile(average, frame.shape[:2]+(1,))
+
+                        masked_fg = cv2.bitwise_and(c, c, mask=mask)
+                        masked_bg = cv2.bitwise_and(frame, frame, mask=mask_inv)
+
+                        frame = cv2.add(masked_bg, masked_fg)
 
                     cv2.imshow('Result', frame/255)
 
