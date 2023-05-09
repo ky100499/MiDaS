@@ -42,6 +42,35 @@ class Window(QtWidgets.QMainWindow):
 
         radioBox.addStretch()
 
+        spctWrap = QtWidgets.QHBoxLayout()
+
+        imgLabel = QtWidgets.QLabel()
+        img = cv2.imread('./assets/img/Spectrum.png')
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (100, 500), interpolation=cv2.INTER_LINEAR)
+        h, w, c = img.shape
+        qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
+        pixmap = QtGui.QPixmap.fromImage(qImg)
+        imgLabel.setPixmap(pixmap)
+
+        spctExplWrap = QtWidgets.QVBoxLayout()
+
+        farLabel = QtWidgets.QLabel()
+        nearLabel = QtWidgets.QLabel()
+
+        farLabel.setText("Far")
+        nearLabel.setText("Near")
+
+        spctExplWrap.addWidget(farLabel)
+        spctExplWrap.addStretch()
+        spctExplWrap.addWidget(nearLabel)
+
+        spctWrap.addLayout(spctExplWrap)
+
+        spctWrap.addWidget(imgLabel)
+
+        radioBox.addLayout(spctWrap)
+
         self.label = QtWidgets.QLabel()
 
         hbox.addWidget(self.label)
