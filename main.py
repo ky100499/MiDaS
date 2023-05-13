@@ -17,6 +17,8 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import threading
 import sys
 
+from playsound import playsound
+
 class Window(QtWidgets.QMainWindow):
     def __init__(self, model_type, optimize, side, grayscale):
         super().__init__()
@@ -36,6 +38,10 @@ class Window(QtWidgets.QMainWindow):
         self.__estimate = False
         th = threading.Thread(target=self.run)
         th.start()
+
+        self.beepThread = None
+        self.__beepPlaying = False
+        self.dangerLimit = 108
 
     def initUI(self):
         mainWidget = QtWidgets.QWidget()
@@ -150,6 +156,8 @@ class Window(QtWidgets.QMainWindow):
 
                     # print(len(contour2), hierarchy)
 
+                    dangerous = False
+
                     # 모든 컨투어 그리기
                     for idx, cont in enumerate(contour2):
                         # 랜덤한 컬러 추출
@@ -170,6 +178,9 @@ class Window(QtWidgets.QMainWindow):
 
                         c = np.tile(average, frame.shape[:2]+(1,))
 
+                        avg_gray = cv2.cvtColor(c, cv2.COLOR_BGR2GRAY)[0][0]
+                        dangerous = dangerous or avg_gray > self.dangerLimit
+
                         masked_fg = cv2.bitwise_and(c, c, mask=mask)
                         masked_bg = cv2.bitwise_and(frame, frame, mask=mask_inv)
 
@@ -182,7 +193,23 @@ class Window(QtWidgets.QMainWindow):
                     pixmap = QtGui.QPixmap.fromImage(qImg)
                     self.label.setPixmap(pixmap)
 
+                    self.beepOn() if dangerous else self.beepOff()
+
         self.cap.release()
+
+    def beep(self):
+        while self.__estimate and self.__beepPlaying:
+            playsound('./assets/audio/beep.mp3')
+
+    def beepOn(self):
+        if self.beepThread is None or not self.beepThread.is_alive():
+            self.__beepPlaying = True
+            self.beepThread = threading.Thread(target=self.beep)
+            self.beepThread.daemon = True
+            self.beepThread.start()
+
+    def beepOff(self):
+        self.__beepPlaying = False
 
     def stop(self):
         self.__estimate = False

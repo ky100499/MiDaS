@@ -3,6 +3,8 @@ import cv2
 import threading
 import sys
 
+from playsound import playsound
+
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -113,11 +115,26 @@ class Window(QtWidgets.QMainWindow):
 
         self.cap.release()
 
+    def beep(self):
+        while self.beepPlaying:
+            playsound('./assets/audio/beep.mp3')
+
+    def beepOn(self):
+        self.beepPlaying = True
+        self.beepThread = threading.Thread(target=self.beep)
+        self.beepThread.daemon = True
+        self.beepThread.start()
+
+    def beepOff(self):
+        self.beepPlaying = False
+
     def stop(self):
+        self.beepOff()
         self.__running = False
         print("stopped..")
 
     def start(self):
+        self.beepOn()
         print("started..")
 
     def onExit(self):
