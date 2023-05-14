@@ -102,8 +102,8 @@ class Window(QtWidgets.QMainWindow):
         hbox.addWidget(self.label)
         hbox.addLayout(radioBox)
 
-        btn_start = QtWidgets.QPushButton("Camera On")
-        btn_stop = QtWidgets.QPushButton("Camera Off")
+        btn_start = QtWidgets.QPushButton("Estimation On")
+        btn_stop = QtWidgets.QPushButton("Estimation Off")
 
         vbox.addLayout(hbox)
         vbox.addWidget(btn_start)
